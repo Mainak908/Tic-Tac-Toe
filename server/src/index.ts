@@ -7,7 +7,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: "https://tic-tac-toe-mnem.vercel.app",
     credentials: true,
   })
 );
@@ -30,7 +30,7 @@ app.use(function (req, res, next) {
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "https://tic-tac-toe-mnem.vercel.app",
     methods: ["GET,PUT,POST,DELETE,UPDATE,OPTIONS"],
     credentials: true,
   },

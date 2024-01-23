@@ -14,7 +14,6 @@ app.use(
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Credentials", "*");
   res.setHeader("Access-Control-Allow-Origin", "*");
-  console.log(req.headers.origin);
 
   res.header(
     "Access-Control-Allow-Methods",
@@ -48,6 +47,7 @@ let gameData: GameData = {
   squares: Array(9).fill(null),
   isXNext: true,
 };
+
 interface PlayerJoinedPayload {
   playerId: string;
 }
@@ -132,6 +132,8 @@ io.on("connection", (socket: Socket) => {
       const playerDisconnectedPayload: PlayerDisconnectedPayload = {
         playerId: socket.id,
       };
+      gameData.isXNext = true;
+      gameData.squares.fill(null);
       io.to("gameRoom").emit("playerDisconnected", playerDisconnectedPayload);
     });
   } else {

@@ -134,6 +134,7 @@ io.on("connection", (socket: Socket) => {
       };
       gameData.isXNext = true;
       gameData.squares.fill(null);
+      io.to("gameRoom").emit("updateState", gameData);
       io.to("gameRoom").emit("playerDisconnected", playerDisconnectedPayload);
     });
   } else {

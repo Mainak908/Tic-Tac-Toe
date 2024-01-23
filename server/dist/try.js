@@ -8,53 +8,13 @@ const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
-app.use((0, cors_1.default)({
-    origin: "http://localhost:3000",
-    credentials: true,
-}));
-app.use(function (req, res, next) {
-    res.header("Access-Control-Allow-Credentials", "*");
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    console.log(req.headers.origin);
-    res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,UPDATE,OPTIONS");
-    res.header("Access-Control-Allow-Headers", "X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept");
-    next();
-});
+app.use((0, cors_1.default)()); // Enable CORS for all routes
 const server = http_1.default.createServer(app);
-const io = new socket_io_1.Server(server, {
-    cors: {
-        origin: "http://localhost:3000",
-        methods: ["GET,PUT,POST,DELETE,UPDATE,OPTIONS"],
-        credentials: true,
-    },
-});
+const io = new socket_io_1.Server(server);
 let connectedClients = 0;
 let currentPlayerIndex = 0;
-let gameData = {
-    squares: Array(9).fill(null),
-    isXNext: true,
-};
-const calculateWinner = (squares) => {
-    const lines = [
-        [0, 1, 2],
-        [3, 4, 5],
-        [6, 7, 8],
-        [0, 3, 6],
-        [1, 4, 7],
-        [2, 5, 8],
-        [0, 4, 8],
-        [2, 4, 6],
-    ];
-    for (let i = 0; i < lines.length; i++) {
-        const [a, b, c] = lines[i];
-        if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-            return squares[a];
-        }
-    }
-    return null;
-};
+let selectedBoxes = Array(9).fill(null);
 io.on("connection", (socket) => {
-    //listen event
     if (connectedClients < 2) {
         // Allow the connection
         connectedClients++;
@@ -65,21 +25,30 @@ io.on("connection", (socket) => {
         socket.emit("acknowledgment", {
             message: "You are connected to the game.",
         });
-        // Send initial game state to the connected client
-        socket.emit("initialState", gameData);
         // Broadcast to all clients in the room when a new player joins
         const playerJoinedPayload = { playerId: socket.id };
         io.to("gameRoom").emit("playerJoined", playerJoinedPayload);
-        socket.on("move", (index) => {
+        // Handle game-related events
+        socket.on("selectBox", (index) => {
             if (socket.id === getCurrentPlayerId()) {
                 // Player is allowed to make a selection
-                if (!gameData.squares[index] && !calculateWinner(gameData.squares)) {
-                    gameData.squares[index] = gameData.isXNext ? "X" : "O";
-                    gameData.isXNext = !gameData.isXNext;
-                    // Broadcast updated game state to all connected clients
-                    io.emit("updateState", gameData);
+                if (selectedBoxes[index] === null) {
+                    // Box is not selected, update the state and broadcast the change
+                    selectedBoxes[index] = socket.id;
+                    io.to("gameRoom").emit("updateBoxes", { selectedBoxes });
+                    // Switch to the next player's turn
+                    switchPlayerTurn();
+                    // Notify all clients about the current player
+                    io.to("gameRoom").emit("currentPlayer", {
+                        playerId: getCurrentPlayerId(),
+                    });
                 }
-                switchPlayerTurn();
+                else {
+                    // Box is already selected, send a message or handle as needed
+                    socket.emit("boxAlreadySelected", {
+                        message: "This box is already selected.",
+                    });
+                }
             }
             else {
                 // It's not the current player's turn, send a message or handle as needed
@@ -93,9 +62,7 @@ io.on("connection", (socket) => {
             connectedClients--;
             console.log(`Client ${socket.id} disconnected. Total connected: ${connectedClients}`);
             // Broadcast to all clients in the room when a player disconnects
-            const playerDisconnectedPayload = {
-                playerId: socket.id,
-            };
+            const playerDisconnectedPayload = { playerId: socket.id };
             io.to("gameRoom").emit("playerDisconnected", playerDisconnectedPayload);
         });
     }
@@ -115,6 +82,8 @@ function getCurrentPlayerId() {
 function switchPlayerTurn() {
     currentPlayerIndex = (currentPlayerIndex + 1) % 2;
 }
+//suppose 1jon khele galo ebr nxt turn e r 1joner index dekhe tar id bar kora holo
+//means circulate hobe game...next joner chara entry hobe na
 server.listen(3001, () => {
     console.log("Server is running on port 3001");
 });

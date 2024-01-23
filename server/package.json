@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "npx ts-node src/index.ts",
     "start": "node dist/index.js",
-    "build": "npx tsc"
+    "build": " tsc"
   },
   "keywords": [],
   "author": "",

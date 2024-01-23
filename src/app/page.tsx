@@ -3,8 +3,6 @@ import { useEffect, useState } from "react";
 import Square from "./_components/square";
 import { socket } from "./_components/socket";
 
-console.log("rendre");
-
 const TicTacToe = (): JSX.Element => {
   interface GameData {
     squares: (string | null)[];

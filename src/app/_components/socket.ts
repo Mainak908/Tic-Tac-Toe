@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-const URL = "http://localhost:3001";
+const URL = "https://bb-87dj.onrender.com";
 
 export const socket = io(URL, {
   extraHeaders: {
